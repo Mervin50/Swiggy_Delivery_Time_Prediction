@@ -2,10 +2,10 @@ stages:
   data_cleaning:
     cmd: python src/data/data_cleaning.py
     deps:
-    - data/raw/swiggy.csv
-    - src/data/data_cleaning.py
+      - data/raw/swiggy.csv
+      - src/data/data_cleaning.py
     outs:
-    - data/cleaned/swiggy_cleaned.csv
+      - data/cleaned/swiggy_cleaned.csv
 
   data_preparation:
     cmd: python src/data/data_preparation.py
@@ -32,12 +32,12 @@ stages:
 
   train:
     cmd: python src/models/train.py
-    deps:
-      - src/models/train.py
-      - data/processed/train_trans.csv
     params:
       - Train.Random_Forest
       - Train.LightGBM
+    deps:
+      - src/models/train.py
+      - data/processed/train_trans.csv
     outs:
       - models/model.joblib
       - models/power_transformer.joblib
@@ -52,3 +52,4 @@ stages:
       - models/model.joblib
     outs:
       - run_information.json
+
