@@ -3,7 +3,6 @@ pandas
 scikit-learn
 mlflow
 dagshub
-dvc
 lightgbm
 joblib
 dvc[s3]
