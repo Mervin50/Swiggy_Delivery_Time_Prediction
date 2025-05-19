@@ -14,6 +14,7 @@ except Exception as e:
     print(f"Failed to read CSV at {data_path}: {e}")
     exit(1)
 
+# sample row for testing the endpoint
 sample_row = df.sample(1)
 target_value = sample_row.iloc[:, -1].values.item().replace("(min) ", "")
 print(f"The target value is {target_value}")
