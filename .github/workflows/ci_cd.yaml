@@ -5,6 +5,7 @@ on: push
 jobs:
   CI-CD:
     runs-on: ubuntu-latest
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
@@ -15,11 +16,11 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Packages
+      - name: Install Python Packages (clean install with dvc[s3])
         run: |
           python -m pip install --upgrade pip
+          pip uninstall -y dvc || true
           pip install --no-cache-dir -r requirements-dev.txt
-          # Force reinstall dvc with S3 support in case of conflict
           pip install --no-cache-dir "dvc[s3]"
 
       - name: Configure AWS Credentials (eu-central-1)
@@ -29,7 +30,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      - name: DVC Pull
+      - name: DVC Pull (1 job at a time)
         run: dvc pull -j 1
 
       - name: Test Model Registry
@@ -70,11 +71,13 @@ jobs:
 
       - name: Zip Files for Deployment
         if: success()
-        run: zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
+        run: |
+          zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
 
       - name: Upload ZIP to S3
         if: success()
-        run: aws s3 cp deployment.zip s3://deliverytimepredictiondeployment/deployment.zip
+        run: |
+          aws s3 cp deployment.zip s3://deliverytimepredictiondeployment/deployment.zip
 
       - name: Deploy to AWS CodeDeploy
         if: success()
@@ -86,3 +89,4 @@ jobs:
             --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region ap-south-1
+
