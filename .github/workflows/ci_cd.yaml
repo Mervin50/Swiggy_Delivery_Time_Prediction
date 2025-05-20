@@ -20,7 +20,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip uninstall -y dvc || true
-          pip install --no-cache-dir -r requirements-dev.txt
+          # Install all packages from requirements-dev.txt EXCEPT DVC
+          grep -v '^dvc' requirements-dev.txt > temp-reqs.txt
+          pip install --no-cache-dir -r temp-reqs.txt
+          # Install DVC with S3 support separately
           pip install --no-cache-dir "dvc[s3]"
 
       - name: Configure AWS Credentials (eu-central-1)
