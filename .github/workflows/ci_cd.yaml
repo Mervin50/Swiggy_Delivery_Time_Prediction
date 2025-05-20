@@ -16,15 +16,14 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Python Packages (clean install with dvc[s3])
+      - name: Install Python Packages (with explicit dvc-s3)
         run: |
           python -m pip install --upgrade pip
           pip uninstall -y dvc || true
-          # Install all packages from requirements-dev.txt EXCEPT DVC
+          # Remove 'dvc' from requirements-dev.txt to avoid duplication/conflict
           grep -v '^dvc' requirements-dev.txt > temp-reqs.txt
           pip install --no-cache-dir -r temp-reqs.txt
-          # Install DVC with S3 support separately
-          pip install --no-cache-dir "dvc[s3]"
+          pip install --no-cache-dir dvc dvc-s3
 
       - name: Configure AWS Credentials (eu-central-1)
         uses: aws-actions/configure-aws-credentials@v4
@@ -92,4 +91,5 @@ jobs:
             --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region ap-south-1
+
 
