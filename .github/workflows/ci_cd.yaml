@@ -22,21 +22,18 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Upgrade pip and install pytest (early to avoid path issues)
+      - name: Install Dependencies (DVC + S3 Fix)
         run: |
           python -m pip install --upgrade pip
-          pip install pytest
-
-      - name: Install All Dependencies (with DVC S3)
-        run: |
-          # Remove DVC to avoid conflicts
+          
+          # Avoid conflicts by filtering out dvc if present in requirements-dev.txt
           grep -v '^dvc' requirements-dev.txt > cleaned-reqs.txt || cp requirements-dev.txt cleaned-reqs.txt
-
-          # Install everything else
+          
+          # Install dependencies except DVC first
           pip install --no-cache-dir -r cleaned-reqs.txt
 
-          # Explicitly install DVC with S3
-          pip install --no-cache-dir dvc[s3]
+          # Explicitly install DVC and its S3 plugin to avoid errors
+          pip install --no-cache-dir dvc dvc[s3]
 
       - name: Configure AWS Credentials (Frankfurt - eu-central-1)
         uses: aws-actions/configure-aws-credentials@v4
@@ -48,15 +45,18 @@ jobs:
       - name: DVC Pull (S3 Data Sync)
         run: dvc pull -j 1
 
+      - name: Show installed Python packages
+        run: pip list
+
       - name: Run Registry Tests
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: pytest tests/test_model_registry.py
+        run: python -m pytest tests/test_model_registry.py
 
       - name: Run Performance Tests
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: pytest tests/test_model_perf.py
+        run: python -m pytest tests/test_model_perf.py
 
       - name: Promote Model to Production
         if: success()
