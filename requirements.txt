@@ -2,7 +2,16 @@
 -e .
 
 # main project requirements
--r requirements.txt
+numpy
+pandas
+scikit-learn
+mlflow
+dagshub
+lightgbm
+joblib
+
+# DVC with S3 support
+dvc[s3]
 
 # testing and development tools
 pytest
@@ -15,7 +24,5 @@ awscli
 python-dotenv>=0.5.1
 click
 
-# DVC with S3 support
-dvc[s3]
 
 
