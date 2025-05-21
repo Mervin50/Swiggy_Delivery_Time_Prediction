@@ -22,21 +22,18 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Python Packages
+      - name: Install Python Packages (incl. DVC + pytest)
         run: |
           python -m pip install --upgrade pip
 
-          # Remove dvc lines from requirements-dev.txt (if present)
+          # Remove dvc from dev requirements if needed to avoid duplication
           grep -v '^dvc' requirements-dev.txt > cleaned-reqs.txt || cp requirements-dev.txt cleaned-reqs.txt
 
-          # Install all other dependencies
+          # Install dev dependencies (incl. pytest)
           pip install --no-cache-dir -r cleaned-reqs.txt
 
-          # Explicitly install dvc with s3 support
+          # Explicitly install DVC and its S3 plugin
           pip install --no-cache-dir dvc[s3]
-
-      - name: Confirm pytest is installed
-        run: pytest --version
 
       - name: Configure AWS Credentials (Frankfurt - eu-central-1)
         uses: aws-actions/configure-aws-credentials@v4
@@ -104,6 +101,7 @@ jobs:
             --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region ap-south-1
+
 
 
 
