@@ -68,7 +68,7 @@ jobs:
       - name: Build, Tag, and Push Docker Image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}    # e.g. 058640778352.dkr.ecr.ap-south-1.amazonaws.com
-          REPOSITORY: ${{ secrets.ECR_REPOSITORY_URI }}      # ONLY repository name, e.g. "swiggy_delivery_time_prediction"
+          REPOSITORY: swiggy_delivery_time_prediction      # ONLY repository name, e.g. "swiggy_delivery_time_prediction"
           IMAGE_TAG: latest
         run: |
           echo "Building image $REGISTRY/$REPOSITORY:$IMAGE_TAG"
