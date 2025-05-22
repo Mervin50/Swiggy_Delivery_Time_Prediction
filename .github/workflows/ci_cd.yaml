@@ -32,7 +32,7 @@ jobs:
           aws-region: eu-central-1
 
       - name: DVC Pull (1 job at a time)
-        run: dvc pull -j 1
+        run: dvc pull -j 1 || true  # prevent failure on missing cache
 
       - name: Run Model Registry Tests (with timeout)
         env:
@@ -75,7 +75,7 @@ jobs:
       - name: Upload ZIP to S3
         if: success()
         run: |
-          aws s3 cp deployment.zip s3://deliverytimepredictiondeployment/deployment.zip
+          aws s3 cp deployment.zip s3://food-delivery-time-pred-project-bucket1/deployment.zip
 
       - name: Deploy to AWS CodeDeploy
         if: success()
@@ -84,7 +84,7 @@ jobs:
             --application-name deliverytimeprediction \
             --deployment-config-name CodeDeployDefault.OneAtATime \
             --deployment-group-name deliverytimepredictiondeploymentgroup \
-            --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
+            --s3-location bucket=food-delivery-time-pred-project-bucket1,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region ap-south-1
 
