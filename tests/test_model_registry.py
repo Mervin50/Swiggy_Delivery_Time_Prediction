@@ -11,8 +11,8 @@ if os.getenv("SKIP_DAGSHUB_INIT") != "1":
     if not dagshub_token:
         raise ValueError("DAGSHUB_TOKEN environment variable not set")
 
-    # Set token in the environment so dagshub can use it
-    os.environ["DAGSHUB_USER_TOKEN"] = "f6be1246505ee84b9efb9a65889518616bc219d7"
+    # Set token for dagshub to authenticate
+    os.environ["DAGSHUB_USER_TOKEN"] = dagshub_token
 
     dagshub.init(
         repo_owner='Mervin50',
@@ -24,11 +24,17 @@ if os.getenv("SKIP_DAGSHUB_INIT") != "1":
 
 
 def load_model_information(file_path):
+    """
+    Load model metadata from a JSON file.
+    """
     with open(file_path) as f:
         return json.load(f)
 
 
 def ensure_model_in_staging(model_name):
+    """
+    Ensure the latest model version is promoted to 'Staging' if not already.
+    """
     client = MlflowClient()
     all_versions = client.get_latest_versions(name=model_name)
 
@@ -57,6 +63,9 @@ model_name = model_info["model_name"]
 
 @pytest.mark.parametrize("model_name, stage", [(model_name, "Staging")])
 def test_load_model_from_registry(model_name, stage):
+    """
+    Test loading the model from the MLflow registry at the given stage.
+    """
     version = ensure_model_in_staging(model_name)
 
     client = MlflowClient()
@@ -70,4 +79,3 @@ def test_load_model_from_registry(model_name, stage):
 
     assert model is not None, "Failed to load model from registry"
     print(f"The {model_name} model with version {latest_version} was loaded successfully")
-

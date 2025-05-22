@@ -37,17 +37,20 @@ jobs:
 
       - name: Test Model Registry
         env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: python -m pytest tests/test_model_registry.py
 
       - name: Test Model Performance
         env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: python -m pytest tests/test_model_perf.py
 
       - name: Promote Model
         if: success()
         env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: python scripts/promote_model_to_prod.py
 
@@ -91,5 +94,6 @@ jobs:
             --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region ap-south-1
+
 
 
