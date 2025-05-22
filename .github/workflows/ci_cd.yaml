@@ -24,7 +24,7 @@ jobs:
           pip install --no-cache-dir -r temp-reqs.txt
           pip install --no-cache-dir dvc dvc-s3
 
-      - name: Configure AWS Credentials (for eu-central-1)
+      - name: Configure AWS Credentials for eu-central-1
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -34,20 +34,23 @@ jobs:
       - name: DVC Pull (1 job at a time)
         run: dvc pull -j 1
 
-      - name: Test Model Registry
+      - name: Run Model Registry Tests (with timeout)
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: python -m pytest tests/test_model_registry.py
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: timeout 300s python -m pytest tests/test_model_registry.py
 
-      - name: Test Model Performance
+      - name: Run Model Performance Tests (with timeout)
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: python -m pytest tests/test_model_perf.py
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: timeout 300s python -m pytest tests/test_model_perf.py
 
       - name: Promote Model
         if: success()
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: python scripts/promote_model_to_prod.py
 
       - name: Login to Amazon ECR (eu-central-1)
@@ -63,13 +66,6 @@ jobs:
           echo "Building image $REGISTRY/$REPOSITORY:$IMAGE_TAG"
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-      - name: Configure AWS Credentials (for ap-south-1)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
 
       - name: Zip Files for Deployment
         if: success()
@@ -91,4 +87,5 @@ jobs:
             --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region ap-south-1
+
 
