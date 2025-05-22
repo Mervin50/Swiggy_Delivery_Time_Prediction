@@ -1,57 +1,74 @@
 name: CI-CD
 
-on: push
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   CI-CD:
     runs-on: ubuntu-latest
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Packages
+      - name: Install Dependencies (DVC + S3 Fix)
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
 
-      - name: Configure AWS Credentials
+          # Filter out dvc to avoid conflicts
+          grep -v '^dvc' requirements-dev.txt > cleaned-reqs.txt || cp requirements-dev.txt cleaned-reqs.txt
+
+          pip install --no-cache-dir -r cleaned-reqs.txt
+
+          # Explicitly install DVC with S3 support
+          pip install --no-cache-dir dvc dvc[s3]
+
+          # Explicitly install pytest to avoid "command not found"
+          pip install pytest
+
+      - name: Show installed packages and pytest version
+        run: |
+          pip list
+          python -m pytest --version
+
+      - name: Configure AWS Credentials (Frankfurt - eu-central-1)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: eu-central-1
 
-      - name: DVC Pull
-        run: |
-          dvc pull
+      - name: DVC Pull (S3 Data Sync)
+        run: dvc pull -j 1
 
-      - name: Test Model Registry
+      - name: Run Registry Tests
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: |
-          python -m pytest tests/test_model_registry.py
+        run: python -m pytest tests/test_model_registry.py
 
-      - name: Test Model Performance
+      - name: Run Performance Tests
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: |
-          python -m pytest tests/test_model_perf.py
+        run: python -m pytest tests/test_model_perf.py
 
-      - name: Promote Model
+      - name: Promote Model to Production
         if: success()
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        run: |
-          python scripts/promote_model_to_prod.py
-          
+        run: python scripts/promote_model_to_prod.py
 
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials (Mumbai - ap-south-1)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -62,8 +79,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-
-      - name: Build, tag, and push docker image to Amazon ECR
+      - name: Build and Push Docker Image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ secrets.ECR_REPOSITORY_URI }}
@@ -72,34 +88,28 @@ jobs:
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
-
-      # Zip the required files
-      - name: Zip files for deployment
+      - name: Zip Deployment Files
         if: success()
         run: |
-            zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
+          zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
 
-
-      # Upload the ZIP file to S3
-      - name: Upload ZIP to S3
+      - name: Upload Deployment ZIP to S3
         if: success()
         run: |
-            aws s3 cp deployment.zip s3://deliverytimepredictiondeployment/deployment.zip
+          aws s3 cp deployment.zip s3://deliverytimepredictiondeployment/deployment.zip
 
-
-      # Deploy to AWS CodeDeploy using the uploaded ZIP file
       - name: Deploy to AWS CodeDeploy
         if: success()
         run: |
-            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws deploy create-deployment \
+          aws deploy create-deployment \
             --application-name deliverytimeprediction \
             --deployment-config-name CodeDeployDefault.OneAtATime \
             --deployment-group-name deliverytimepredictiondeploymentgroup \
             --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region ap-south-1
+
+
 
 
 
