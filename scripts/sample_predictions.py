@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 from pathlib import Path
 
-PREDICT_URL = "http://localhost:8000/predict"  # adjust if needed
+PREDICT_URL = "http://3.71.79.255:8000/predict"  # adjust if needed
 REQUEST_TIMEOUT = 10
 
 root_path = Path(__file__).resolve().parent.parent
