@@ -82,10 +82,11 @@ jobs:
         run: |
           aws deploy create-deployment \
             --application-name deliverytimeprediction \
-            --deployment-config-name CodeDeployDefault.OneAtATime \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
             --deployment-group-name deliverytimepredictiondeploymentgroup \
             --s3-location bucket=food-delivery-time-pred-project-bucket1,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
             --region eu-central-1
+
 
 
