@@ -86,6 +86,6 @@ jobs:
             --deployment-group-name deliverytimepredictiondeploymentgroup \
             --s3-location bucket=food-delivery-time-pred-project-bucket1,key=deployment.zip,bundleType=zip \
             --file-exists-behavior OVERWRITE \
-            --region ap-south-1
+            --region eu-central-1
 
 
