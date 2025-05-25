@@ -59,8 +59,10 @@ Project Organization
 🚀 End-to-End ML Deployment for Swiggy Delivery Time Prediction on AWS
 
 ● Predicted delivery times to optimize logistics and improve customer satisfaction using a robust ML pipeline. 
+
 ● Built an API with FastAPI, automated deployment using Docker and CI/CD, and deployed on AWS EC2 with 
 S3 integration. 
+
 ● Tools: Python, FastAPI, DVC, Docker, CI/CD, AWS EC2, S3, Load Balancer, ECR
 
 Website Snippets:
