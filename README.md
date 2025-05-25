@@ -56,7 +56,8 @@ Project Organization
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
 
-🚀 End-to-End ML Deployment for Delivery Time Prediction on AWS
+🚀 End-to-End ML Deployment for Swiggy Delivery Time Prediction on AWS
+
 ● Predicted delivery times to optimize logistics and improve customer satisfaction using a robust ML pipeline. 
 ● Built an API with FastAPI, automated deployment using Docker and CI/CD, and deployed on AWS EC2 with 
 S3 integration. 
